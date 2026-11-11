@@ -15,6 +15,7 @@
 from . import tensor_networks
 
 from .rbm import RBM, RBMModPhase, RBMMultiVal, RBMSymm
+from .phase_separated import PhaseSeparated
 from .equivariant import GCNN
 from .full_space import LogStateVector
 from .jastrow import Jastrow
