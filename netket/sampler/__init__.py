@@ -18,6 +18,7 @@ from .base import (
 )
 
 from .exact import ExactSampler
+from .gibbs import GibbsSampler
 
 from .metropolis import (
     MetropolisSampler,

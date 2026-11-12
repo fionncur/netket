@@ -46,6 +46,9 @@ class GibbsSampler(Sampler):
     def _reset(self, model, variables, state):
         return state
 
+    @partial(
+        jax.jit, static_argnames=("model", "chain_length", "return_log_probabilities")
+    )
     def _sample_chain(
         self, model, variables, state, chain_length, return_log_probabilities=False
     ):
@@ -74,4 +77,20 @@ class GibbsSampler(Sampler):
 
             # return updated GibbsSamplerState
             return state.replace(sigma=sigma, rng=key)
+
+        def save_sample(state, _):
+            """Loop block_update over state sweep_size times"""
+            state = jax.lax.fori_loop(0, self.sweep_size, block_update, state)
+            return state, state.sigma
+
+        state, samples = jax.lax.scan(save_sample, state, None, length=chain_length)
+        samples = jnp.swapaxes(samples, 0, 1)  # (chains, length, sites)
+
+        if return_log_probabilities:
+            amplitude = model.amplitude.apply(
+                {"params": variables["params"]["amplitude"]}, samples
+            )
+            return (samples, 2 * amplitude), state
+
+        return samples, state
 
